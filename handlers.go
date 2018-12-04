@@ -3,7 +3,6 @@ package main
 import (
   "fmt"
   "net/http"
-  "time"
   "encoding/json"
 
   "github.com/julienschmidt/httprouter"
@@ -14,11 +13,6 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func TodoIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-  todos := Todos{
-    Todo{Name: "Write presentation", Due: time.Now()},
-    Todo{Name: "Host meetup"},
-  }
-
   w.Header().Set("Content-Type", "application/json; charset=UTF-8")
   w.WriteHeader(http.StatusOK)
 
