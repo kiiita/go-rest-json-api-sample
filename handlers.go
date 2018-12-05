@@ -18,6 +18,8 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func TodoIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	todos := Todos{}
+	db.Find(&todos)
 
 	if err := json.NewEncoder(w).Encode(todos); err != nil {
 		panic(err)
@@ -29,6 +31,9 @@ func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, err := strconv.Atoi(idParam)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
+	todo := Todo{}
+	t := db.Find(&todo, id)
+
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
@@ -37,8 +42,7 @@ func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	t := RepoFindTodo(id)
-	if t.ID == 0 && t.Name == "" {
+	if t.Error != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -59,6 +63,7 @@ func TodoCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	defer r.Body.Close()
 
+	// Unmarshal make todo with decoded json
 	if err := json.Unmarshal(body, &todo); err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(500)
@@ -67,13 +72,13 @@ func TodoCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		return
 	}
-
-	t := RepoCreateTodo(todo)
-	location := fmt.Sprintf("http://%s/%d", r.Host, t.ID)
+	// t := RepoCreateTodo(todo)
+	db.Create(&todo)
+	location := fmt.Sprintf("http://%s/%d", r.Host, todo.ID)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Location", location)
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(t); err != nil {
+	if err := json.NewEncoder(w).Encode(todo); err != nil {
 		panic(err)
 	}
 	return
