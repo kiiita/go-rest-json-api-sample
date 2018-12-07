@@ -72,7 +72,6 @@ func TodoCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		return
 	}
-	// t := RepoCreateTodo(todo)
 	db.Create(&todo)
 	location := fmt.Sprintf("http://%s/%d", r.Host, todo.ID)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -95,15 +94,9 @@ func TodoDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		return
 	}
-
-	if err := RepoDestroyTodo(id); err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-		return
-	}
+	todo := Todo{}
+	db.Find(&todo, id)
+	db.Delete(&todo)
 
 	w.WriteHeader(204) // 204 No Content
 	return
