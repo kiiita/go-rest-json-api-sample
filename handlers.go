@@ -8,14 +8,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcmoe!")
 }
 
-func TodoIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func TodoIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	todos := Todos{}
@@ -26,8 +26,8 @@ func TodoIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	idParam := ps.ByName("todoId")
+func TodoShow(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "todoID")
 	id, err := strconv.Atoi(idParam)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -52,7 +52,7 @@ func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	return
 }
 
-func TodoCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func TodoCreate(w http.ResponseWriter, r *http.Request) {
 	var todo Todo
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // 1MiB
@@ -81,8 +81,8 @@ func TodoCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	return
 }
 
-func TodoDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	idParam := ps.ByName("todoId")
+func TodoDelete(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "todoID")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")

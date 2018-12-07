@@ -5,19 +5,22 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/jinzhu/gorm"
-	"github.com/julienschmidt/httprouter"
 )
 
 var db *gorm.DB
 
 func main() {
-	router := httprouter.New()
-	router.GET("/", Logging(Index, "index"))
-	router.GET("/todos", Logging(TodoIndex, "todo-index"))
-	router.POST("/todos", Logging(TodoCreate, "todo-create"))
-	router.GET("/todos/:todoId", Logging(TodoShow, "todo-show"))
-	router.DELETE("/todos/:todoId", Logging(TodoDelete, "todo-delete"))
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+
+	r.Get("/", Index)
+	r.Get("/todos", TodoIndex)
+	r.Post("/todos", TodoCreate)
+	r.Get("/todos/{todoID}", TodoShow)
+	r.Delete("/todos/{todoID}", TodoDelete)
 
 	// Setup DB
 	var err error
@@ -31,5 +34,5 @@ func main() {
 
 	// logs
 	db.LogMode(true)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
