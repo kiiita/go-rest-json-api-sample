@@ -32,7 +32,10 @@ func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	todo := Todo{}
-	t := db.Find(&todo, id)
+	if err := db.Where("id = ?", id).First(&todo).Error; err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -42,13 +45,8 @@ func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if t.Error != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(t); err != nil {
+	if err := json.NewEncoder(w).Encode(todo); err != nil {
 		panic(err)
 	}
 	return
@@ -95,7 +93,10 @@ func TodoDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	todo := Todo{}
-	db.Find(&todo, id)
+	if err := db.Where("id = ?", id).First(&todo).Error; err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	db.Delete(&todo)
 
 	w.WriteHeader(204) // 204 No Content
