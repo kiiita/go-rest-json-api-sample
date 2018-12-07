@@ -6,7 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
+
+	u "./utils"
 
 	"github.com/go-chi/chi"
 )
@@ -16,40 +17,20 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func TodoIndex(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 	todos := Todos{}
 	db.Find(&todos)
-
-	if err := json.NewEncoder(w).Encode(todos); err != nil {
-		panic(err)
-	}
+	u.Respond(w, http.StatusOK, todos)
 }
 
 func TodoShow(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "todoID")
-	id, err := strconv.Atoi(idParam)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
+	todoID := chi.URLParam(r, "todoID")
 	todo := Todo{}
-	if err := db.Where("id = ?", id).First(&todo).Error; err != nil {
-		w.WriteHeader(http.StatusNotFound)
+	if err := db.Where("id = ?", todoID).First(&todo).Error; err != nil {
+		msg := fmt.Sprintf("Couldn't find a todo with ID %s", todoID)
+		u.Respond(w, http.StatusNotFound, u.Message(false, msg))
 		return
 	}
-
-	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(todo); err != nil {
-		panic(err)
-	}
-	return
+	u.Respond(w, http.StatusOK, todo)
 }
 
 func TodoCreate(w http.ResponseWriter, r *http.Request) {
@@ -63,42 +44,25 @@ func TodoCreate(w http.ResponseWriter, r *http.Request) {
 
 	// Unmarshal make todo with decoded json
 	if err := json.Unmarshal(body, &todo); err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
+		msg := fmt.Sprintf("Initernal Server Error")
+		u.Respond(w, http.StatusInternalServerError, u.Message(false, msg))
 		return
 	}
 	db.Create(&todo)
 	location := fmt.Sprintf("http://%s/%d", r.Host, todo.ID)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Location", location)
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(todo); err != nil {
-		panic(err)
-	}
-	return
+	u.Respond(w, http.StatusCreated, todo)
 }
 
 func TodoDelete(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "todoID")
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-		return
-	}
+	todoID := chi.URLParam(r, "todoID")
 	todo := Todo{}
-	if err := db.Where("id = ?", id).First(&todo).Error; err != nil {
-		w.WriteHeader(http.StatusNotFound)
+	if err := db.Where("id = ?", todoID).First(&todo).Error; err != nil {
+		msg := fmt.Sprintf("Couldn't find a todo with ID %s", todoID)
+		u.Respond(w, http.StatusNotFound, u.Message(false, msg))
 		return
 	}
 	db.Delete(&todo)
-
-	w.WriteHeader(204) // 204 No Content
+	u.Respond(w, http.StatusOK, u.Message(true, "Success to delete"))
 	return
 }
