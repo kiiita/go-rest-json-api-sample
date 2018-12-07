@@ -1,9 +1,13 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/jinzhu/gorm"
+)
 
 type Todo struct {
-	ID        int       `json:"id"`
+	gorm.Model
 	Name      string    `json:"name"`
 	Completed bool      `json:"complted"`
 	Due       time.Time `json:"due"`
